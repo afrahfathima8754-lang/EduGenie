@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EduGenie - Learning Assistant</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>🧠 EduGenie</h1>
+        <p>Google Gemini Powered Learning Assistant</p>
+    </div>
+
+    <div class="card">
+        <h2>💬 Ask a Question</h2>
+        <input
+            type="text"
+            id="question"
+            placeholder="Ask anything..."
+        >
+        <button onclick="askQuestion()">Get Answer</button>
+        <div id="answer" class="result"></div>
+    </div>
+
+    <div class="card">
+        <h2>📚 Explain a Topic</h2>
+        <input
+            type="text"
+            id="topic"
+            placeholder="Enter a topic..."
+        >
+        <button onclick="explainTopic()">Explain</button>
+        <div id="explanation" class="result"></div>
+    </div>
+
+    <div class="card">
+        <h2>📝 Summarize Content</h2>
+        <textarea
+            id="summaryText"
+            placeholder="Paste your paragraph here..."
+        ></textarea>
+        <button onclick="summarizeText()">Summarize</button>
+        <div id="summary" class="result"></div>
+    </div>
+
+    <div class="card">
+        <h2>❓ Generate Quiz</h2>
+        <textarea
+            id="quizText"
+            placeholder="Enter a topic or passage..."
+        ></textarea>
+        <button onclick="generateQuiz()">Generate Quiz</button>
+        <div id="quiz" class="result"></div>
+    </div>
+
+    <div class="card">
+        <h2>🎯 Learning Path</h2>
+        <input
+            type="text"
+            id="learningTopic"
+            placeholder="Enter a topic..."
+        >
+        <button onclick="learningPath()">Get Learning Path</button>
+        <div id="learning" class="result"></div>
+    </div>
+
+</div>
+
+<script>
+
+async function askQuestion() {
+    const text = document.getElementById("question").value;
+
+    const formData = new FormData();
+    formData.append("question", text);
+
+    const response = await fetch("/ask", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await response.json();
+
+    document.getElementById("answer").innerText = data.result;
+}
+
+
+async function explainTopic() {
+    const text = document.getElementById("topic").value;
+
+    const formData = new FormData();
+    formData.append("topic", text);
+
+    const response = await fetch("/explain", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await response.json();
+
+    document.getElementById("explanation").innerText = data.result;
+}
+
+
+async function summarizeText() {
+    const text = document.getElementById("summaryText").value;
+
+    const formData = new FormData();
+    formData.append("text", text);
+
+    const response = await fetch("/summarize", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await response.json();
+
+    document.getElementById("summary").innerText = data.result;
+}
+
+
+let currentQuiz = [];
+
+async function generateQuiz() {
+    const text = document.getElementById("quizText").value;
+
+    const formData = new FormData();
+    formData.append("passage", text);
+
+    const response = await fetch("/quiz", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await response.json();
+
+    currentQuiz = data.result;
+
+    const quizBox = document.getElementById("quiz");
+    quizBox.innerHTML = "";
+
+    if (!Array.isArray(currentQuiz)) {
+        quizBox.innerText = JSON.stringify(currentQuiz, null, 2);
+        return;
+    }
+
+    currentQuiz.forEach((q, i) => {
+
+        let html = `
+            <div class="quiz-question">
+                <h3>Question ${i + 1}</h3>
+                <p><b>${q.question}</b></p>
+        `;
+
+        q.options.forEach((option, j) => {
+            html += `
+                <label class="quiz-option">
+                    <input type="radio" name="question${i}" value="${option}">
+                    ${String.fromCharCode(65 + j)}. ${option}
+                </label>
+            `;
+        });
+
+        html += `
+            <div id="feedback${i}" class="feedback"></div>
+            </div>
+        `;
+
+        quizBox.innerHTML += html;
+    });
+
+    quizBox.innerHTML += `
+        <button onclick="checkQuiz()">Check Answers</button>
+    `;
+}
+
+function checkQuiz() {
+
+    currentQuiz.forEach((q, i) => {
+
+        const selected =
+            document.querySelector(`input[name="question${i}"]:checked`);
+
+        const feedback =
+            document.getElementById(`feedback${i}`);
+
+        if (!selected) {
+            feedback.innerText = "Please select an answer.";
+            feedback.style.color = "#facc15";
+        }
+        else if (selected.value === q["correct answer"]) {
+            feedback.innerText = "✓ Correct!";
+            feedback.style.color = "#22c55e";
+        }
+        else {
+            feedback.innerText =
+                `✗ Wrong! Correct answer: ${q["correct answer"]}`;
+            feedback.style.color = "#ef4444";
+        }
+    });
+}
+
+
+async function learningPath() {
+    const text = document.getElementById("learningTopic").value;
+
+    const formData = new FormData();
+    formData.append("topic", text);
+
+    const response = await fetch("/learning-path", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await response.json();
+
+    document.getElementById("learning").innerText = data.result;
+}
+
+</script>
+
+</body>
+</html>
