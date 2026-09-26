@@ -48,6 +48,3 @@ def summarize(request: Request, text: str = Form(...)):
 @app.post("/learning-path")
 def learning_path(request: Request, topic: str = Form(...)):
     return {"result": create_learning_path(topic)}
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app,host="127.0.0.1",port=8000)
